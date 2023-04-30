@@ -35,22 +35,69 @@ symbol_width EQU 10
 symbol_height EQU 20
 
 
-Point STRUCT
-    x EQU ?
-    y EQU ?
-Point ENDS
 
-Snake STRUCT
-    body dd Point <>
-    length_total EQU ?
-    direction DD ?
-Snake ENDS
 
 
 include digits.inc
 include letters.inc
 
 .code
+
+draw_square MACRO x:REQ, y:REQ
+    push eax
+    push ebx
+	push ecx
+	push edx
+    mov eax, y
+	mov ebx, area_width
+	mul ebx ; EAX = y * area_width
+	add eax, x ; EAX = y * area_width + x
+	shl eax, 2 ; EAX = (y * area_width + x)*4
+	add eax, area
+	
+	mov edx, 1
+	mov ecx, 40
+	add eax, 4*area_width
+	LOOP_BIG:
+	push edx
+	mov dword ptr[eax], 0FF0000h
+	
+	mov edx, 1
+	mov ecx, 40
+	LOOP_START:        
+    ; body of the loop goes here
+	mov ebx, edx
+	shl ebx, 2	
+	add eax, ebx
+	mov dword ptr[eax], 0FF0000h
+	sub eax, ebx
+    INC edx         
+    CMP edx, ecx    
+    JLE LOOP_START  
+	
+	;mov edx, 1
+	;LOOP_START2:        
+    ; body of the loop goes here
+	;mov ebx, edx
+	;shl ebx, 2	
+	;sub eax, ebx
+	;mov dword ptr[eax], 0FF0000h
+	;add eax, ebx
+    ;INC edx         
+    ;CMP edx, ecx    
+    ;JLE LOOP_START2
+	
+	mov ecx, 40
+	add eax, 4*area_width
+	pop edx
+	INC edx         
+    CMP edx, ecx    
+    JLE LOOP_BIG
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+ENDM
 ; procedura make_text afiseaza o litera sau o cifra la coordonatele date
 ; arg1 - simbolul de afisat (litera sau cifra)
 ; arg2 - pointer la vectorul de pixeli
@@ -157,54 +204,14 @@ draw proc
 	jmp afisare_litere
 	
 evt_click:
-	mov eax, [ebp+arg3] ; EAX = y
-	mov ebx, area_width
-	mul ebx ; EAX = y * area_width
-	add eax, [ebp+arg2] ; EAX = y * area_width + x
-	shl eax, 2 ; EAX = (y * area_width + x)*4
-	add eax, area
-	
-	
-	
-	mov edx, 1
-	mov ecx, 40
-	add eax, 4*area_width*20
-	LOOP_BIG:
-	push edx
-	mov dword ptr[eax], 0FF0000h
-	
-	mov edx, 1
-	mov ecx, 20
-	LOOP_START:        
-    ; body of the loop goes here
-	mov ebx, edx
-	shl ebx, 2	
-	add eax, ebx
-	mov dword ptr[eax], 0FF0000h
-	sub eax, ebx
-    INC edx         
-    CMP edx, ecx    
-    JLE LOOP_START  
-	
-	mov edx, 1
-	LOOP_START2:        
-    ; body of the loop goes here
-	mov ebx, edx
-	shl ebx, 2	
-	sub eax, ebx
-	mov dword ptr[eax], 0FF0000h
-	add eax, ebx
-    INC edx         
-    CMP edx, ecx    
-    JLE LOOP_START2
-	
-	mov ecx, 40
-	sub eax, 4*area_width
-	pop edx
-	INC edx         
-    CMP edx, ecx    
-    JLE LOOP_BIG
-	
+	draw_square [ebp+arg2], [ebp+arg3]
+
+	;mov eax, [ebp+arg3] ; EAX = y
+	;mov ebx, area_width
+	;mul ebx ; EAX = y * area_width
+	;add eax, [ebp+arg2] ; EAX = y * area_width + x
+	;shl eax, 2 ; EAX = (y * area_width + x)*4
+	;add eax, area
 	jmp afisare_litere
 	
 evt_timer:
@@ -258,6 +265,9 @@ final_draw:
 	pop ebp
 	ret
 draw endp
+
+
+
 
 start:
 	;alocam memorie pentru zona de desenat

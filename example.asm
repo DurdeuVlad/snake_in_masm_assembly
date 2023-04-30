@@ -19,7 +19,7 @@ public start
 ;sectiunile programului, date, respectiv cod
 .data
 ;aici declaram date
-window_title DB "SNAKE by Vlad Durdeu",0
+window_title DB "Exemplu proiect desenare",0
 area_width EQU 640
 area_height EQU 480
 area DD 0
@@ -33,20 +33,6 @@ arg4 EQU 20
 
 symbol_width EQU 10
 symbol_height EQU 20
-
-
-Point STRUCT
-    x EQU ?
-    y EQU ?
-Point ENDS
-
-Snake STRUCT
-    body dd Point <>
-    length_total EQU ?
-    direction DD ?
-Snake ENDS
-
-
 include digits.inc
 include letters.inc
 
@@ -157,7 +143,27 @@ draw proc
 	jmp afisare_litere
 	
 evt_click:
-	
+	mov edi, area
+	mov ecx, area_height
+	mov ebx, [ebp+arg3]
+	and ebx, 7
+	inc ebx
+bucla_linii:
+	mov eax, [ebp+arg2]
+	and eax, 0FFh
+	; provide a new (random) color
+	mul eax
+	mul eax
+	add eax, ecx
+	push ecx
+	mov ecx, area_width
+bucla_coloane:
+	mov [edi], eax
+	add edi, 4
+	add eax, ebx
+	loop bucla_coloane
+	pop ecx
+	loop bucla_linii
 	jmp afisare_litere
 	
 evt_timer:
