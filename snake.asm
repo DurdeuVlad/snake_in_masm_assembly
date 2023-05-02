@@ -10,6 +10,18 @@ extern memset: proc
 
 includelib canvas.lib
 extern BeginDrawing: proc
+
+include snake_methods.asm
+;EXTERN comparePoints:PROC
+;EXTERN modifyCurrentPosition:PROC
+;EXTERN spawnFood:PROC
+;EXTERN checkIfFoodExistsAndSpawn:PROC
+;EXTERN moveSnake:PROC
+;EXTERN eatFood:PROC
+;EXTERN restart:PROC
+;EXTERN reactToScreenPositionAndDrawSnake:PROC
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;declaram simbolul start ca public - de acolo incepe executia
@@ -19,10 +31,22 @@ public start
 ;sectiunile programului, date, respectiv cod
 .data
 ;aici declaram date
+
+
 window_title DB "SNAKE by Vlad Durdeu",0
-area_width EQU 640
-area_height EQU 480
+area_width EQU 700
+area_height EQU 700
 area DD 0
+screen DD 0
+screen_size EQU 10
+square_size EQU 30
+
+
+red EQU 0FF0000h
+black EQU 0FFFFFFh
+white EQU 0FF0000h
+green EQU 000FF00h
+blue EQU 00000FFh
 
 counter DD 0 ; numara evenimentele de tip timer
 
@@ -35,15 +59,149 @@ symbol_width EQU 10
 symbol_height EQU 20
 
 
-
-
-
 include digits.inc
 include letters.inc
 
 .code
+; do not forget to save eax
+turn_screen_code_color MACRO code
+	push ebx
+	push ecx
+	
+	MOV ebx, code
+	mov ecx, 0
+	CMP ebx, ecx    
+	JLE fill_a_screen_white 
+    inc ecx	
+	CMP ebx, ecx    
+	JLE fill_a_screen_black  
+	inc ecx
+	CMP ebx, ecx    
+	JLE fill_a_screen_green  
+	inc ecx
+	CMP ebx, ecx    
+	JLE fill_a_screen_red
+	inc ecx
+	inc ecx
+	CMP ebx, ecx    
+	JLE fill_a_screen_blue  	
+	
+	fill_a_screen_white:
+		mov eax, offset white
+		jmp fill_a_screen_end
+	fill_a_screen_black:
+		mov eax, offset black
+		jmp fill_a_screen_end
+	fill_a_screen_green:
+		mov eax, offset green
+		jmp fill_a_screen_end
+	fill_a_screen_red:
+		mov eax, offset red
+		jmp fill_a_screen_end
+	fill_a_screen_blue:
+		mov eax, offset blue
+		jmp fill_a_screen_end
+	
+	fill_a_screen_end:
+	pop ecx
+	pop ebx
+	
+	
+endm
 
-draw_square MACRO x:REQ, y:REQ
+
+fill_a_screen MACRO
+	push eax
+    push ebx
+	push ecx
+	push edx
+	push esi
+	push edi
+
+	mov ecx, screen_size	; Load screen_size into ECX for outer loop
+	mov edx, square_size
+	mov esi, 0                 ; Initialize i to 0
+
+	fill_a_screen_outer_loop:
+    mov edi, 0             ; Initialize j to 0
+
+    fill_a_screen_inner_loop:
+        ; inner loop body
+		push eax
+		push ebx
+		push edx
+		push ecx
+		
+		mov ebx, square_size
+		mov eax, esi
+		MUL ebx
+		sub eax, esi
+		mov ecx, eax
+		
+		mov eax, 1
+		mov ebx, square_size
+		mul ebx
+		mul edi
+		mov ebx, eax
+		;mov ecx, eax
+		
+		;push ebx
+		;mov ebx, square_size
+		;mov eax, edi
+		;mul ebx
+
+		turn_screen_code_color 0
+	
+		draw_square ecx, ebx, eax
+		
+		pop ecx
+		pop edx
+		pop ebx
+		pop eax
+		
+        inc edi           ; Increment j
+        cmp edi, ecx      ; Compare j with screen_size
+        jl fill_a_screen_inner_loop     ; Jump to inner_loop if j < screen_size
+
+    inc esi               ; Increment i
+    cmp esi, ecx          ; Compare i with screen_size
+    jl fill_a_screen_outer_loop         ; Jump to outer_loop if i < screen_size
+	
+	
+	pop edi
+	pop esi
+	pop edx
+    pop ecx
+    pop ebx
+    pop eax
+ENDM
+
+fill_a_matrix MACRO matrix, MAX, value
+	push eax
+    push ebx
+	push ecx
+	push edx
+	mov eax, matrix
+	mov edx, 1
+	mov ecx, MAX
+	LOOP_START_fill_a_matrix:        
+    ; body of the loop goes here
+	mov ebx, edx
+	shl ebx, 2	
+	sub eax, ebx
+	mov dword ptr[eax], value
+	add eax, ebx
+    INC edx         
+    CMP edx, ecx    
+    JLE LOOP_START_fill_a_matrix
+	pop edx
+    pop ecx
+    pop ebx
+    pop eax
+ENDM
+
+
+draw_square MACRO x:REQ, y:REQ, color:REQ
     push eax
     push ebx
 	push ecx
@@ -56,20 +214,27 @@ draw_square MACRO x:REQ, y:REQ
 	add eax, area
 	
 	mov edx, 1
-	mov ecx, 40
+	mov ecx, square_size
 	add eax, 4*area_width
 	LOOP_BIG:
 	push edx
-	mov dword ptr[eax], 0FF0000h
+	
+	push ebx
+	mov ebx, [color]
+	mov dword ptr[eax], ebx
+	pop ebx
 	
 	mov edx, 1
-	mov ecx, 40
+	mov ecx, square_size
 	LOOP_START:        
     ; body of the loop goes here
 	mov ebx, edx
 	shl ebx, 2	
 	add eax, ebx
-	mov dword ptr[eax], 0FF0000h
+	push ebx
+	mov ebx, [color]
+	mov dword ptr[eax], ebx
+	pop ebx
 	sub eax, ebx
     INC edx         
     CMP edx, ecx    
@@ -87,13 +252,60 @@ draw_square MACRO x:REQ, y:REQ
     ;CMP edx, ecx    
     ;JLE LOOP_START2
 	
-	mov ecx, 40
+	mov ecx, square_size
 	add eax, 4*area_width
 	pop edx
 	INC edx         
     CMP edx, ecx    
     JLE LOOP_BIG
     pop edx
+    pop ecx
+    pop ebx
+    pop eax
+ENDM
+
+reset_area MACRO
+	push eax
+    push ebx
+	push ecx
+	push edx
+	
+	
+	mov eax, area_width
+	mov ebx, area_height
+	mul ebx
+	shl eax, 2
+	push eax
+	push 255
+	push area
+	call memset
+	add esp, 12
+	
+	
+	pop edx
+    pop ecx
+    pop ebx
+    pop eax
+ENDM
+
+; this doesnt work
+reset_screen MACRO
+	push eax
+    push ebx
+	push ecx
+	push edx
+	
+	mov eax, screen_size
+	mov ebx, screen_size
+	mul ebx
+	shl eax, 2
+	push eax
+	push 0
+	push screen
+	call memset
+	add esp, 12
+	
+	pop edx
     pop ecx
     pop ebx
     pop eax
@@ -192,20 +404,13 @@ draw proc
 	cmp eax, 2
 	jz evt_timer ; nu s-a efectuat click pe nimic
 	;mai jos e codul care intializeaza fereastra cu pixeli albi
-	mov eax, area_width
-	mov ebx, area_height
-	mul ebx
-	shl eax, 2
-	push eax
-	push 255
-	push area
-	call memset
-	add esp, 12
+	reset_area
 	jmp afisare_litere
 	
 evt_click:
-	draw_square [ebp+arg2], [ebp+arg3]
-
+    reset_area
+	;draw_square [ebp+arg2], [ebp+arg3]
+	
 	;mov eax, [ebp+arg3] ; EAX = y
 	;mov ebx, area_width
 	;mul ebx ; EAX = y * area_width
@@ -216,6 +421,7 @@ evt_click:
 	
 evt_timer:
 	inc counter
+	fill_a_screen
 	
 afisare_litere:
 	;afisam valoarea counter-ului curent (sute, zeci si unitati)
@@ -278,7 +484,20 @@ start:
 	push eax
 	call malloc
 	add esp, 4
+	
+	
 	mov area, eax
+	mov eax, screen_size*screen_size
+	shl eax, 2
+	push eax
+	call malloc
+	add esp, 4
+	mov screen, eax
+	mov eax, 0
+	fill_a_matrix screen, screen_size, eax
+	
+	
+	;reset_screen
 	;apelam functia de desenare a ferestrei
 	; typedef void (*DrawFunc)(int evt, int x, int y);
 	; void __cdecl BeginDrawing(const char *title, int width, int height, unsigned int *area, DrawFunc draw);
