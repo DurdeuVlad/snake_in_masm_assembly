@@ -11,7 +11,9 @@ extern memset: proc
 includelib canvas.lib
 extern BeginDrawing: proc
 
-include snake_methods.asm
+
+
+;include snake_methods.asm
 ;EXTERN comparePoints:PROC
 ;EXTERN modifyCurrentPosition:PROC
 ;EXTERN spawnFood:PROC
@@ -37,16 +39,22 @@ window_title DB "SNAKE by Vlad Durdeu",0
 area_width EQU 700
 area_height EQU 700
 area DD 0
-screen DD 0
-screen_size EQU 10
+screen_size EQU 10 ; dimensiunea matricei in ambele directii
+screen Dd screen_size DUP (screen_size DUP (?)) ; declararea matricei
 square_size EQU 30
 
-
 red EQU 0FF0000h
-black EQU 0FFFFFFh
-white EQU 0FF0000h
+black EQU 0000000h
+white EQU 0FFFFFFh
 green EQU 000FF00h
 blue EQU 00000FFh
+error_color EQU 0A020F0h
+current_color dd 0
+
+one dd 1
+two dd 2
+three dd 3
+four dd 4
 
 counter DD 0 ; numara evenimentele de tip timer
 
@@ -63,6 +71,114 @@ include digits.inc
 include letters.inc
 
 .code
+
+;functia fill_matrix umple matricea cu o valoare data
+fill_matrix PROC matrix:PTR WORD, value:dWORD
+    push esi
+    push edi
+    mov esi, matrix ; incarcam adresa matricei in registru
+    mov ecx, SCREEN_SIZE*SCREEN_SIZE ; numarul total de elemente din matrice
+    mov edi, value ; incarcam valoarea de umplere in registru
+    fill_loop:
+    mul cx ; inmultim i cu dimensiunea matricei
+    add di, bx ; adaugam j * 2 la di (dimensiunea unui element din matrice)
+    mov WORD PTR [esi], di ; umplem elementul de la adresa [esi] cu valoarea [edi]
+    add esi, 2 ; trecem la urmatorul element din matrice (de 2 bytes)
+    loop fill_loop ; repetam pasii pentru urmatorul element din matrice
+    pop edi
+    pop esi
+    ret
+fill_matrix ENDP
+
+fill_matrix_macro MACRO value
+	push_all_registers
+	push value
+	push screen
+	call fill_matrix
+	add esp, 8
+	pop_all_registers
+ENDM
+
+push_all_registers MACRO
+	push eax
+	push ebx
+	push ecx
+	push edx
+	push esi
+	push edi
+ENDM
+
+pop_all_registers MACRO
+	pop eax
+	pop ebx
+	pop ecx
+	pop edx
+	pop esi
+	pop edi
+ENDM
+	
+set_position_macro MACRO matrix, i, j, value
+	push_all_registers
+	push value
+	push j
+	push i
+	push matrix
+	call set_position
+	add esp, 16
+	pop_all_registers
+ENDM
+
+;functia set_position seteaza valoarea unui element de la pozitia (i, j) in matrice
+set_position PROC matrix:PTR WORD, i:DWORD, j:DWORD, value:Dword
+    push eax
+    push ebx
+    push ecx
+    push edx
+    mov eax, i ; incarcam valoarea i in eax
+    mov ebx, j ; incarcam valoarea j in ebx
+    mov ecx, SCREEN_SIZE ; incarcam dimensiunea matricei in ecx
+    mul ecx ; inmultim i cu dimensiunea matricei
+    add eax, ebx ; adunam j la rezultatul inmultirii
+    shl eax, 1 ; inmultim rezultatul cu 2 pentru ca fiecare element din matrice ocupa 2 bytes
+    ;add matrix, eax ; adaugam offset-ul calculat la adresa de inceput a matricei
+	mov ebx, value
+    mov [eax], ebx ; setam valoarea la adresa calculata
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    ret
+set_position ENDP
+
+get_position_macro MACRO matrix, i, j
+	push_all_registers
+	push value
+	push j
+	push i
+	push matrix
+	call get_position
+	add esp, 16
+	push matrix
+	pop_all_registers
+ENDM
+;functia get_position returneaza valoarea unui element de la pozitia (i, j) in matrice
+get_position PROC matrix:PTR WORD, i:dWORD, j:dWORD
+    push eax
+    push ebx
+    push ecx
+    mov eax, i ; incarcam valoarea i in eax
+    mov ebx, j ; incarcam valoarea j in ebx
+    mov ecx, SCREEN_SIZE ; incarcam dimensiunea matricei in ecx
+    mul ecx ; inmultim i cu dimensiunea matricei
+    add eax, ebx ; adunam j la rezultatul inmultirii
+    shl eax, 1 ; inmultim rezultatul cu 2 pentru ca fiecare element din matrice ocupa 2 bytes
+    add matrix, eax ; adaugam offset-ul calculat la adresa de inceput a matricei
+    movzx eax, WORD PTR [matrix] ; incarcam valoarea de la adresa calculata in eax, folosind movzx pentru a extinde zero semnificativi
+    pop ecx
+    pop ebx
+    pop eax
+    ret
+get_position ENDP
 ; do not forget to save eax
 turn_screen_code_color MACRO code
 	push ebx
@@ -80,33 +196,61 @@ turn_screen_code_color MACRO code
 	JLE fill_a_screen_green  
 	inc ecx
 	CMP ebx, ecx    
-	JLE fill_a_screen_red
+	JLE fill_a_screen_blue
 	inc ecx
 	inc ecx
 	CMP ebx, ecx    
-	JLE fill_a_screen_blue  	
+	JLE fill_a_screen_red  	
 	
+	fill_a_screen_error:
+		mov current_color, [error_color]
+		make_text_macro 'E', area, 500, 100
+		make_text_macro 'R', area, 510, 100
+		make_text_macro 'R', area, 520, 100
+		make_text_macro 'O', area, 530, 100
+		make_text_macro 'R', area, 540, 100
+		jmp fill_a_screen_end
 	fill_a_screen_white:
-		mov eax, offset white
+		mov current_color, [white]
+		make_text_macro 'W', area, 500, 100
+		make_text_macro 'H', area, 510, 100
+		make_text_macro 'I', area, 520, 100
+		make_text_macro 'T', area, 530, 100
+		make_text_macro 'E', area, 540, 100
 		jmp fill_a_screen_end
 	fill_a_screen_black:
-		mov eax, offset black
+		mov current_color, [black]
+		make_text_macro 'B', area, 500, 100
+		make_text_macro 'L', area, 510, 100
+		make_text_macro 'A', area, 520, 100
+		make_text_macro 'C', area, 530, 100
+		make_text_macro 'K', area, 540, 100
 		jmp fill_a_screen_end
 	fill_a_screen_green:
-		mov eax, offset green
+		mov current_color, [green]
 		jmp fill_a_screen_end
+		make_text_macro 'G', area, 500, 100
+		make_text_macro 'R', area, 510, 100
+		make_text_macro 'E', area, 520, 100
+		make_text_macro 'E', area, 530, 100
+		make_text_macro 'N', area, 540, 100
 	fill_a_screen_red:
-		mov eax, offset red
+		mov current_color, [red]
+		make_text_macro 'R', area, 500, 100
+		make_text_macro 'E', area, 510, 100
+		make_text_macro 'D', area, 520, 100
 		jmp fill_a_screen_end
 	fill_a_screen_blue:
-		mov eax, offset blue
+		mov current_color, [blue]
+		make_text_macro 'B', area, 500, 100
+		make_text_macro 'L', area, 510, 100
+		make_text_macro 'U', area, 520, 100
+		make_text_macro 'E', area, 530, 100
 		jmp fill_a_screen_end
 	
 	fill_a_screen_end:
 	pop ecx
 	pop ebx
-	
-	
 endm
 
 
@@ -138,21 +282,19 @@ fill_a_screen MACRO
 		sub eax, esi
 		mov ecx, eax
 		
-		mov eax, 1
+		mov eax, edi
 		mov ebx, square_size
 		mul ebx
-		mul edi
 		mov ebx, eax
-		;mov ecx, eax
-		
-		;push ebx
-		;mov ebx, square_size
-		;mov eax, edi
-		;mul ebx
 
-		turn_screen_code_color 0
-	
-		draw_square ecx, ebx, eax
+		mov eax, edi
+		mul esi
+		shl eax, 2
+		add eax, screen
+		turn_screen_code_color [EAX]
+		;mov eax, [blue]
+		
+		draw_square ecx, ebx, current_color
 		
 		pop ecx
 		pop edx
@@ -176,24 +318,56 @@ fill_a_screen MACRO
     pop eax
 ENDM
 
+; functia asta poate are probleme
 fill_a_matrix MACRO matrix, MAX, value
 	push eax
     push ebx
 	push ecx
 	push edx
+	push edi
+	push esi
 	mov eax, matrix
 	mov edx, 1
 	mov ecx, MAX
-	LOOP_START_fill_a_matrix:        
-    ; body of the loop goes here
-	mov ebx, edx
-	shl ebx, 2	
-	sub eax, ebx
-	mov dword ptr[eax], value
-	add eax, ebx
-    INC edx         
-    CMP edx, ecx    
-    JLE LOOP_START_fill_a_matrix
+      
+
+	mov esi, 0 ; init i to 0
+	mov ecx, MAX
+	fill_a_matrix_outer_loop:
+	mov edi, 0             ; Initialize j to 0
+
+    fill_a_matrix_inner_loop:
+        ; inner loop body
+		push eax
+		push ebx
+		push edx
+		push ecx
+		
+		;put the code here
+		
+		mov eax, esi
+		add eax, edi
+		shl eax, 2
+		add eax, matrix
+		mov [eax], value
+		
+		
+		pop ecx
+		pop edx
+		pop ebx
+		pop eax
+		
+        inc edi           ; Increment j
+        cmp edi, ecx      ; Compare j with screen_size
+        jl fill_a_matrix_inner_loop     ; Jump to inner_loop if j < screen_size
+
+    inc esi               ; Increment i
+    cmp esi, ecx          ; Compare i with screen_size
+    jl fill_a_matrix_outer_loop         ; Jump to outer_loop if i < screen_size
+	
+	
+	pop esi
+	pop edi
 	pop edx
     pop ecx
     pop ebx
@@ -201,6 +375,8 @@ fill_a_matrix MACRO matrix, MAX, value
 ENDM
 
 
+
+; functia asta functioneaza cum trebuie
 draw_square MACRO x:REQ, y:REQ, color:REQ
     push eax
     push ebx
@@ -221,7 +397,7 @@ draw_square MACRO x:REQ, y:REQ, color:REQ
 	
 	push ebx
 	mov ebx, [color]
-	mov dword ptr[eax], ebx
+	mov [eax], ebx
 	pop ebx
 	
 	mov edx, 1
@@ -245,7 +421,7 @@ draw_square MACRO x:REQ, y:REQ, color:REQ
     ; body of the loop goes here
 	;mov ebx, edx
 	;shl ebx, 2	
-	;sub eax, ebx
+	;sub eax, ebx	
 	;mov dword ptr[eax], 0FF0000h
 	;add eax, ebx
     ;INC edx         
@@ -289,7 +465,7 @@ reset_area MACRO
 ENDM
 
 ; this doesnt work
-reset_screen MACRO
+reset_screen MACRO value:REQ
 	push eax
     push ebx
 	push ecx
@@ -300,7 +476,7 @@ reset_screen MACRO
 	mul ebx
 	shl eax, 2
 	push eax
-	push 0
+	push value
 	push screen
 	call memset
 	add esp, 12
@@ -409,8 +585,10 @@ draw proc
 	
 evt_click:
     reset_area
-	;draw_square [ebp+arg2], [ebp+arg3]
-	
+	;fill_a_matrix screen screen_size one
+	fill_a_screen
+	;turn_screen_code_color 5
+	;draw_square [ebp+arg2], [ebp+arg3], current_color
 	;mov eax, [ebp+arg3] ; EAX = y
 	;mov ebx, area_width
 	;mul ebx ; EAX = y * area_width
@@ -421,7 +599,7 @@ evt_click:
 	
 evt_timer:
 	inc counter
-	fill_a_screen
+	
 	
 afisare_litere:
 	;afisam valoarea counter-ului curent (sute, zeci si unitati)
@@ -444,26 +622,6 @@ afisare_litere:
 	make_text_macro edx, area, 10, 10
 	
 	;scriem un mesaj
-	make_text_macro 'P', area, 110, 100
-	make_text_macro 'R', area, 120, 100
-	make_text_macro 'O', area, 130, 100
-	make_text_macro 'I', area, 140, 100
-	make_text_macro 'E', area, 150, 100
-	make_text_macro 'C', area, 160, 100
-	make_text_macro 'T', area, 170, 100
-	
-	make_text_macro 'L', area, 130, 120
-	make_text_macro 'A', area, 140, 120
-	
-	make_text_macro 'A', area, 100, 140
-	make_text_macro 'S', area, 110, 140
-	make_text_macro 'A', area, 120, 140
-	make_text_macro 'M', area, 130, 140
-	make_text_macro 'B', area, 140, 140
-	make_text_macro 'L', area, 150, 140
-	make_text_macro 'A', area, 160, 140
-	make_text_macro 'R', area, 170, 140
-	make_text_macro 'E', area, 180, 140
 
 final_draw:
 	popa
@@ -471,6 +629,7 @@ final_draw:
 	pop ebp
 	ret
 draw endp
+
 
 
 
@@ -484,20 +643,22 @@ start:
 	push eax
 	call malloc
 	add esp, 4
-	
-	
 	mov area, eax
-	mov eax, screen_size*screen_size
+	
+	
+	mov eax, screen_size
+	mov ebx, screen_size
+	mul ebx
 	shl eax, 2
 	push eax
 	call malloc
 	add esp, 4
-	mov screen, eax
-	mov eax, 0
-	fill_a_matrix screen, screen_size, eax
+	mov screen, eax	
+	fill_matrix_macro 2
 	
 	
-	;reset_screen
+	;reset_screen two
+	;fill_a_matrix screen, screen_size, eax
 	;apelam functia de desenare a ferestrei
 	; typedef void (*DrawFunc)(int evt, int x, int y);
 	; void __cdecl BeginDrawing(const char *title, int width, int height, unsigned int *area, DrawFunc draw);
