@@ -6,6 +6,7 @@
 includelib msvcrt.lib
 extern exit: proc
 extern malloc: proc
+extern printf: proc
 extern memset: proc
 
 includelib canvas.lib
@@ -36,8 +37,8 @@ public start
 
 
 window_title DB "SNAKE by Vlad Durdeu",0
-area_width EQU 700
-area_height EQU 700
+area_width EQU 800
+area_height EQU 800
 area DD 0
 SCREEN_SIZE EQU 10 ; dimensiunea matricei in ambele directii
 screen Dw SCREEN_SIZE DUP (SCREEN_SIZE DUP (6)) ; declararea matricei
@@ -51,7 +52,7 @@ green EQU 000FF00h
 blue EQU 00000FFh
 error_color EQU 0A020F0h
 current_color dd 0
-current_read_matrix_number dd 5
+current_read_matrix_number dd 6
 
 one dd 1
 two dd 2
@@ -68,11 +69,26 @@ arg4 EQU 20
 symbol_width EQU 10
 symbol_height EQU 20
 
+;debug messages
+
+turn_screen_code_color_debug db "[turn_screen_code_color]: The code value is: %d", 10, 0
+get_position_debug db "[get_position_debug]: The code value is: %d", 10, 0
+fill_a_screen_debug_i db "[fill_a_screen_debug]: i= %d", 10, 0
+fill_a_screen_debug_j db "[fill_a_screen_debug]: j= %d", 10, 0
 
 include digits.inc
 include letters.inc
 
 .code
+
+print_debug MACRO message:REQ, value:REQ
+    pusha
+	push value
+    push offset message
+    call printf
+    add esp, 8
+    popa
+ENDM
 
 ;functia fill_matrix umple matricea cu o valoare data
 fill_matrix PROC matrix:PTR WORD, value:dWORD
@@ -109,32 +125,29 @@ pop_all_registers MACRO
 	popa
 ENDM
 	
-set_position_macro MACRO matrix, i, j, value
+set_position_macro MACRO i, j, value
+LOCAL set_position_end
 	pusha
-	push value
-	push j
-	push i
-	push matrix
-	call set_position
-	add esp, 16
-	popa
+    mov eax, i
+    mov ebx, j
+    mov ecx, SCREEN_SIZE
+    cmp eax, ecx
+    jae set_position_end
+    cmp ebx, ecx
+    jae set_position_end
+    shl eax, 1
+    add eax, ebx
+    shl eax, 1
+    lea ebx, screen
+    add ebx, eax
+    mov ax, value ; Move 16-bit value to AX
+    mov [ebx], ax  ; Store in memory as a word
+	jmp set_position_end
+set_position_end:
+    popa
 ENDM
 
-;functia set_position seteaza valoarea unui element de la pozitia (i, j) in matrice
-set_position PROC matrix:PTR WORD, i:DWORD, j:DWORD, value:Dword
-    push_all_registers
-    mov eax, i ; incarcam valoarea i in eax
-    mov ebx, j ; incarcam valoarea j in ebx
-    mov ecx, SCREEN_SIZE ; incarcam dimensiunea matricei in ecx
-    mul ecx ; inmultim i cu dimensiunea matricei
-    add eax, ebx ; adunam j la rezultatul inmultirii
-    shl eax, 1 ; inmultim rezultatul cu 2 pentru ca fiecare element din matrice ocupa 2 bytes
-    ;add matrix, eax ; adaugam offset-ul calculat la adresa de inceput a matricei
-	mov ebx, value
-    mov [eax], ebx ; setam valoarea la adresa calculata
-    pop_all_registers
-    ret
-set_position ENDP
+
 
 get_position_macro MACRO i, j
     LOCAL error_label, get_position_end
@@ -152,18 +165,28 @@ get_position_macro MACRO i, j
     lea ebx, screen
     add ebx, eax
     movzx eax, WORD PTR [ebx]
-    mov current_read_matrix_number, ebx
+    mov current_read_matrix_number, eax
+	;print_debug get_position_debug, eax
+	;mov eax, current_read_matrix_number
+	
+	
+;	cdq            ; sign extend eax into edx
+;	mov ebx, 6     ; divisor
+;	idiv ebx       ; divide edx:eax by ebx, result in eax (quotient) and edx (remainder)
+;	mov eax, edx   ; move remainder into eax
+
     jmp get_position_end
 error_label:
-    mov eax, 0
+    mov eax, 6
     mov current_read_matrix_number, eax
 get_position_end:
     popa
 ENDM
 
 turn_screen_code_color MACRO code
+	LOCAL fill_a_screen_error, fill_a_screen_white, fill_a_screen_black, fill_a_screen_green, fill_a_screen_blue, fill_a_screen_red
 	pusha
-	
+	;print_debug turn_screen_code_color_debug, code
 	MOV ebx, code
 	mov ecx, 0
 	CMP ebx, ecx    
@@ -229,7 +252,7 @@ turn_screen_code_color MACRO code
 		jmp fill_a_screen_end
 	
 	fill_a_screen_end:
-	
+	popa
 endm
 
 
@@ -238,13 +261,16 @@ local fill_a_screen_outer_loop, fill_a_screen_inner_loop
 	pusha
 
 	mov ecx, screen_size	; Load screen_size into ECX for outer loop
-	sub ecx, 0
+	;sub ecx, 0
 	mov edx, square_size
 	mov esi, 0                ; Initialize i to 0
-
+	
 	fill_a_screen_outer_loop:
-    mov edi, 0             ; Initialize j to 0
+	;print_debug fill_a_screen_debug_i, esi
 
+    mov edi, 0             ; Initialize j to 0
+	;print_debug fill_a_screen_debug_j, edi
+	
     fill_a_screen_inner_loop:
         ; inner loop body
 		pusha
@@ -261,7 +287,8 @@ local fill_a_screen_outer_loop, fill_a_screen_inner_loop
 		mov ebx, eax
 		get_position_macro esi, edi
 		mov eax, current_read_matrix_number
-		;turn_screen_code_color current_read_matrix_number
+		
+		turn_screen_code_color current_read_matrix_number
 		;mov current_color, [blue]
 		draw_square ecx, ebx, current_color
 		
@@ -269,11 +296,11 @@ local fill_a_screen_outer_loop, fill_a_screen_inner_loop
 		
         inc edi           ; Increment j
         cmp edi, ecx      ; Compare j with screen_size
-        jl fill_a_screen_inner_loop     ; Jump to inner_loop if j < screen_size
+        jle fill_a_screen_inner_loop     ; Jump to inner_loop if j < screen_size
 
     inc esi               ; Increment i
     cmp esi, ecx          ; Compare i with screen_size
-    jl fill_a_screen_outer_loop         ; Jump to outer_loop if i < screen_size
+    jle fill_a_screen_outer_loop         ; Jump to outer_loop if i < screen_size
 	
 	
 	popa
@@ -364,18 +391,6 @@ LOCAL LOOP_BIG, LOOP_START
     INC edx         
     CMP edx, ecx    
     JLE LOOP_START  
-	
-	;mov edx, 1
-	;LOOP_START2:        
-    ; body of the loop goes here
-	;mov ebx, edx
-	;shl ebx, 2	
-	;sub eax, ebx	
-	;mov dword ptr[eax], 0FF0000h
-	;add eax, ebx
-    ;INC edx         
-    ;CMP edx, ecx    
-    ;JLE LOOP_START2
 	
 	mov ecx, square_size
 	add eax, 4*area_width
@@ -514,12 +529,15 @@ draw proc
 	cmp eax, 2
 	jz evt_timer ; nu s-a efectuat click pe nimic
 	;mai jos e codul care intializeaza fereastra cu pixeli albi
-	reset_area
+	
 	jmp afisare_litere
 	
 evt_click:
-    ;reset_area
-	fill_a_screen
+	set_position_macro 1, 2, 4	
+
+	;get_position_macro 1, 2
+	
+	draw_square [ebp+arg2], [ebp+arg3], current_color
 	;fill_a_matrix screen screen_size one
 	;get_position_macro 2, 2
 	;turn_screen_code_color 5
@@ -534,6 +552,8 @@ evt_click:
 	
 evt_timer:
 	inc counter
+	reset_area
+	fill_a_screen
 	
 	
 afisare_litere:
@@ -580,6 +600,7 @@ start:
 	add esp, 4
 	mov area, eax
 	
+	mov current_color, [error_color]
 	
 	;mov eax, screen_size
 	;mov ebx, screen_size
