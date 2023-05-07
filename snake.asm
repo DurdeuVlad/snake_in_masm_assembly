@@ -39,8 +39,9 @@ window_title DB "SNAKE by Vlad Durdeu",0
 area_width EQU 700
 area_height EQU 700
 area DD 0
-screen_size EQU 10 ; dimensiunea matricei in ambele directii
-screen Dd screen_size DUP (screen_size DUP (?)) ; declararea matricei
+SCREEN_SIZE EQU 10 ; dimensiunea matricei in ambele directii
+screen Dw SCREEN_SIZE DUP (SCREEN_SIZE DUP (6)) ; declararea matricei
+;screen Dd 0
 square_size EQU 30
 
 red EQU 0FF0000h
@@ -50,6 +51,7 @@ green EQU 000FF00h
 blue EQU 00000FFh
 error_color EQU 0A020F0h
 current_color dd 0
+current_read_matrix_number dd 5
 
 one dd 1
 two dd 2
@@ -100,40 +102,27 @@ fill_matrix_macro MACRO value
 ENDM
 
 push_all_registers MACRO
-	push eax
-	push ebx
-	push ecx
-	push edx
-	push esi
-	push edi
+	pusha
 ENDM
 
 pop_all_registers MACRO
-	pop eax
-	pop ebx
-	pop ecx
-	pop edx
-	pop esi
-	pop edi
+	popa
 ENDM
 	
 set_position_macro MACRO matrix, i, j, value
-	push_all_registers
+	pusha
 	push value
 	push j
 	push i
 	push matrix
 	call set_position
 	add esp, 16
-	pop_all_registers
+	popa
 ENDM
 
 ;functia set_position seteaza valoarea unui element de la pozitia (i, j) in matrice
 set_position PROC matrix:PTR WORD, i:DWORD, j:DWORD, value:Dword
-    push eax
-    push ebx
-    push ecx
-    push edx
+    push_all_registers
     mov eax, i ; incarcam valoarea i in eax
     mov ebx, j ; incarcam valoarea j in ebx
     mov ecx, SCREEN_SIZE ; incarcam dimensiunea matricei in ecx
@@ -143,46 +132,37 @@ set_position PROC matrix:PTR WORD, i:DWORD, j:DWORD, value:Dword
     ;add matrix, eax ; adaugam offset-ul calculat la adresa de inceput a matricei
 	mov ebx, value
     mov [eax], ebx ; setam valoarea la adresa calculata
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
+    pop_all_registers
     ret
 set_position ENDP
 
-get_position_macro MACRO matrix, i, j
-	push_all_registers
-	push value
-	push j
-	push i
-	push matrix
-	call get_position
-	add esp, 16
-	push matrix
-	pop_all_registers
+get_position_macro MACRO i, j
+    LOCAL error_label, get_position_end
+	pusha
+    mov eax, i
+    mov ebx, j
+    mov ecx, SCREEN_SIZE
+    cmp eax, ecx
+    jae error_label
+    cmp ebx, ecx
+    jae error_label
+    shl eax, 1
+    add eax, ebx
+    shl eax, 1
+    lea ebx, screen
+    add ebx, eax
+    movzx eax, WORD PTR [ebx]
+    mov current_read_matrix_number, ebx
+    jmp get_position_end
+error_label:
+    mov eax, 0
+    mov current_read_matrix_number, eax
+get_position_end:
+    popa
 ENDM
-;functia get_position returneaza valoarea unui element de la pozitia (i, j) in matrice
-get_position PROC matrix:PTR WORD, i:dWORD, j:dWORD
-    push eax
-    push ebx
-    push ecx
-    mov eax, i ; incarcam valoarea i in eax
-    mov ebx, j ; incarcam valoarea j in ebx
-    mov ecx, SCREEN_SIZE ; incarcam dimensiunea matricei in ecx
-    mul ecx ; inmultim i cu dimensiunea matricei
-    add eax, ebx ; adunam j la rezultatul inmultirii
-    shl eax, 1 ; inmultim rezultatul cu 2 pentru ca fiecare element din matrice ocupa 2 bytes
-    add matrix, eax ; adaugam offset-ul calculat la adresa de inceput a matricei
-    movzx eax, WORD PTR [matrix] ; incarcam valoarea de la adresa calculata in eax, folosind movzx pentru a extinde zero semnificativi
-    pop ecx
-    pop ebx
-    pop eax
-    ret
-get_position ENDP
-; do not forget to save eax
+
 turn_screen_code_color MACRO code
-	push ebx
-	push ecx
+	pusha
 	
 	MOV ebx, code
 	mov ecx, 0
@@ -249,32 +229,25 @@ turn_screen_code_color MACRO code
 		jmp fill_a_screen_end
 	
 	fill_a_screen_end:
-	pop ecx
-	pop ebx
+	
 endm
 
 
 fill_a_screen MACRO
-	push eax
-    push ebx
-	push ecx
-	push edx
-	push esi
-	push edi
+local fill_a_screen_outer_loop, fill_a_screen_inner_loop
+	pusha
 
 	mov ecx, screen_size	; Load screen_size into ECX for outer loop
+	sub ecx, 0
 	mov edx, square_size
-	mov esi, 0                 ; Initialize i to 0
+	mov esi, 0                ; Initialize i to 0
 
 	fill_a_screen_outer_loop:
     mov edi, 0             ; Initialize j to 0
 
     fill_a_screen_inner_loop:
         ; inner loop body
-		push eax
-		push ebx
-		push edx
-		push ecx
+		pusha
 		
 		mov ebx, square_size
 		mov eax, esi
@@ -286,20 +259,13 @@ fill_a_screen MACRO
 		mov ebx, square_size
 		mul ebx
 		mov ebx, eax
-
-		mov eax, edi
-		mul esi
-		shl eax, 2
-		add eax, screen
-		turn_screen_code_color [EAX]
-		;mov eax, [blue]
-		
+		get_position_macro esi, edi
+		mov eax, current_read_matrix_number
+		;turn_screen_code_color current_read_matrix_number
+		;mov current_color, [blue]
 		draw_square ecx, ebx, current_color
 		
-		pop ecx
-		pop edx
-		pop ebx
-		pop eax
+		popa
 		
         inc edi           ; Increment j
         cmp edi, ecx      ; Compare j with screen_size
@@ -310,22 +276,12 @@ fill_a_screen MACRO
     jl fill_a_screen_outer_loop         ; Jump to outer_loop if i < screen_size
 	
 	
-	pop edi
-	pop esi
-	pop edx
-    pop ecx
-    pop ebx
-    pop eax
+	popa
 ENDM
 
 ; functia asta poate are probleme
 fill_a_matrix MACRO matrix, MAX, value
-	push eax
-    push ebx
-	push ecx
-	push edx
-	push edi
-	push esi
+	pusha
 	mov eax, matrix
 	mov edx, 1
 	mov ecx, MAX
@@ -366,22 +322,15 @@ fill_a_matrix MACRO matrix, MAX, value
     jl fill_a_matrix_outer_loop         ; Jump to outer_loop if i < screen_size
 	
 	
-	pop esi
-	pop edi
-	pop edx
-    pop ecx
-    pop ebx
-    pop eax
+	popa
 ENDM
 
 
 
 ; functia asta functioneaza cum trebuie
 draw_square MACRO x:REQ, y:REQ, color:REQ
-    push eax
-    push ebx
-	push ecx
-	push edx
+LOCAL LOOP_BIG, LOOP_START
+    pusha
     mov eax, y
 	mov ebx, area_width
 	mul ebx ; EAX = y * area_width
@@ -434,17 +383,11 @@ draw_square MACRO x:REQ, y:REQ, color:REQ
 	INC edx         
     CMP edx, ecx    
     JLE LOOP_BIG
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
+    popa
 ENDM
 
 reset_area MACRO
-	push eax
-    push ebx
-	push ecx
-	push edx
+	pusha
 	
 	
 	mov eax, area_width
@@ -458,18 +401,12 @@ reset_area MACRO
 	add esp, 12
 	
 	
-	pop edx
-    pop ecx
-    pop ebx
-    pop eax
+	popa
 ENDM
 
 ; this doesnt work
 reset_screen MACRO value:REQ
-	push eax
-    push ebx
-	push ecx
-	push edx
+	pusha
 	
 	mov eax, screen_size
 	mov ebx, screen_size
@@ -481,10 +418,7 @@ reset_screen MACRO value:REQ
 	call memset
 	add esp, 12
 	
-	pop edx
-    pop ecx
-    pop ebx
-    pop eax
+	popa
 ENDM
 ; procedura make_text afiseaza o litera sau o cifra la coordonatele date
 ; arg1 - simbolul de afisat (litera sau cifra)
@@ -584,9 +518,10 @@ draw proc
 	jmp afisare_litere
 	
 evt_click:
-    reset_area
-	;fill_a_matrix screen screen_size one
+    ;reset_area
 	fill_a_screen
+	;fill_a_matrix screen screen_size one
+	;get_position_macro 2, 2
 	;turn_screen_code_color 5
 	;draw_square [ebp+arg2], [ebp+arg3], current_color
 	;mov eax, [ebp+arg3] ; EAX = y
@@ -646,15 +581,15 @@ start:
 	mov area, eax
 	
 	
-	mov eax, screen_size
-	mov ebx, screen_size
-	mul ebx
-	shl eax, 2
-	push eax
-	call malloc
-	add esp, 4
-	mov screen, eax	
-	fill_matrix_macro 2
+	;mov eax, screen_size
+	;mov ebx, screen_size
+	;mul ebx
+	;shl eax, 2
+	;push eax
+	;call malloc
+	;add esp, 4
+	;mov screen, eax	
+	;fill_matrix_macro 2
 	
 	
 	;reset_screen two
