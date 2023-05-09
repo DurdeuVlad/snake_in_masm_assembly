@@ -7,6 +7,9 @@ includelib msvcrt.lib
 extern exit: proc
 extern malloc: proc
 extern printf: proc
+extern fscanf: proc
+extern fopen: proc
+extern fclose: proc
 extern memset: proc
 
 includelib canvas.lib
@@ -41,9 +44,19 @@ area_width EQU 800
 area_height EQU 800
 area DD 0
 SCREEN_SIZE EQU 10 ; dimensiunea matricei in ambele directii
-screen Dw SCREEN_SIZE DUP (SCREEN_SIZE DUP (6)) ; declararea matricei
+screen dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 ;screen Dd 0
 square_size EQU 30
+MAX equ 10 ; same thing with screen_size 
 
 red EQU 0FF0000h
 black EQU 0000000h
@@ -69,6 +82,11 @@ arg4 EQU 20
 symbol_width EQU 10
 symbol_height EQU 20
 
+;file mode and format strings
+read_mode db "r", 0
+fscanf_int_format db "%d", 0
+
+
 ;debug messages
 
 turn_screen_code_color_debug db "[turn_screen_code_color]: The code value is: %d", 10, 0
@@ -76,10 +94,34 @@ get_position_debug db "[get_position_debug]: The code value is: %d", 10, 0
 fill_a_screen_debug_i db "[fill_a_screen_debug]: i= %d", 10, 0
 fill_a_screen_debug_j db "[fill_a_screen_debug]: j= %d", 10, 0
 
+nivel1 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+
+nivel2 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+
 include digits.inc
 include letters.inc
 
 .code
+
+
 
 print_debug MACRO message:REQ, value:REQ
     pusha
@@ -135,13 +177,14 @@ LOCAL set_position_end
     jae set_position_end
     cmp ebx, ecx
     jae set_position_end
-    shl eax, 1
+    shl eax, 2
     add eax, ebx
-    shl eax, 1
+    shl eax, 2
     lea ebx, screen
     add ebx, eax
-    mov ax, value ; Move 16-bit value to AX
-    mov [ebx], ax  ; Store in memory as a word
+	xor eax, eax
+    mov eax, value ; Move 16-bit value to AX
+    mov [ebx], eax  ; Store in memory as a word
 	jmp set_position_end
 set_position_end:
     popa
@@ -149,9 +192,10 @@ ENDM
 
 
 
-get_position_macro MACRO i, j
+get_position_macro MACRO i, j, matrix
     LOCAL error_label, get_position_end
 	pusha
+	; luam i coloana, j rand, screen+i*4+screenmax*j*4
     mov eax, i
     mov ebx, j
     mov ecx, SCREEN_SIZE
@@ -159,25 +203,25 @@ get_position_macro MACRO i, j
     jae error_label
     cmp ebx, ecx
     jae error_label
-    shl eax, 1
+    shl eax, 2
+	shl ebx, 2
+	push eax
+	mov eax, ebx
+	mul ecx
+	mov ebx, eax
+	pop eax
     add eax, ebx
-    shl eax, 1
-    lea ebx, screen
+    lea ebx, matrix
     add ebx, eax
-    movzx eax, WORD PTR [ebx]
+    mov eax, [ebx]
     mov current_read_matrix_number, eax
-	;print_debug get_position_debug, eax
+	;print_debug eax
+	print_debug get_position_debug, eax
 	;mov eax, current_read_matrix_number
-	
-	
-;	cdq            ; sign extend eax into edx
-;	mov ebx, 6     ; divisor
-;	idiv ebx       ; divide edx:eax by ebx, result in eax (quotient) and edx (remainder)
-;	mov eax, edx   ; move remainder into eax
 
     jmp get_position_end
 error_label:
-    mov eax, 6
+    mov eax, 0
     mov current_read_matrix_number, eax
 get_position_end:
     popa
@@ -285,7 +329,7 @@ local fill_a_screen_outer_loop, fill_a_screen_inner_loop
 		mov ebx, square_size
 		mul ebx
 		mov ebx, eax
-		get_position_macro esi, edi
+		get_position_macro esi, edi, screen
 		mov eax, current_read_matrix_number
 		
 		turn_screen_code_color current_read_matrix_number
@@ -306,53 +350,42 @@ local fill_a_screen_outer_loop, fill_a_screen_inner_loop
 	popa
 ENDM
 
-; functia asta poate are probleme
-fill_a_matrix MACRO matrix, MAX, value
+set_screen_to_level MACRO nivel
+local outer_loop, inner_loop
 	pusha
-	mov eax, matrix
-	mov edx, 1
-	mov ecx, MAX
-      
 
-	mov esi, 0 ; init i to 0
-	mov ecx, MAX
-	fill_a_matrix_outer_loop:
-	mov edi, 0             ; Initialize j to 0
+	mov ecx, screen_size	; Load screen_size into ECX for outer loop
+	;sub ecx, 0
+	mov edx, square_size
+	mov esi, 0                ; Initialize i to 0
+	
+	outer_loop:
+	;print_debug fill_a_screen_debug_i, esi
 
-    fill_a_matrix_inner_loop:
+    mov edi, 0             ; Initialize j to 0
+	;print_debug fill_a_screen_debug_j, edi
+	
+    inner_loop:
         ; inner loop body
-		push eax
-		push ebx
-		push edx
-		push ecx
+		pusha
 		
-		;put the code here
+		get_position_macro esi, edi, nivel
+		mov eax, current_read_matrix_number
+		set_position_macro esi, edi, eax
 		
-		mov eax, esi
-		add eax, edi
-		shl eax, 2
-		add eax, matrix
-		mov [eax], value
-		
-		
-		pop ecx
-		pop edx
-		pop ebx
-		pop eax
+		popa
 		
         inc edi           ; Increment j
         cmp edi, ecx      ; Compare j with screen_size
-        jl fill_a_matrix_inner_loop     ; Jump to inner_loop if j < screen_size
+        jle inner_loop     ; Jump to inner_loop if j < screen_size
 
     inc esi               ; Increment i
     cmp esi, ecx          ; Compare i with screen_size
-    jl fill_a_matrix_outer_loop         ; Jump to outer_loop if i < screen_size
+    jle outer_loop         ; Jump to outer_loop if i < screen_size
 	
 	
 	popa
 ENDM
-
-
 
 ; functia asta functioneaza cum trebuie
 draw_square MACRO x:REQ, y:REQ, color:REQ
@@ -533,7 +566,13 @@ draw proc
 	jmp afisare_litere
 	
 evt_click:
-	set_position_macro 1, 2, 4	
+	push eax
+    mov eax, nivel1
+	mov screen, eax
+	pop eax
+	set_screen_to_level nivel2
+	;set_position_macro 1, 2, 2	
+	;set_position_macro 2, 2, 3	
 
 	;get_position_macro 1, 2
 	
@@ -553,6 +592,7 @@ evt_click:
 evt_timer:
 	inc counter
 	reset_area
+;	read_level_macro offset level
 	fill_a_screen
 	
 	
