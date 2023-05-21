@@ -122,16 +122,20 @@ space db "space %d", 10, 0
 ; Define a new variable to represent the initial position of the snake
 
 ; Define a vector of numbers between 0 and MAX
-food_positions dd 1, 2, 3, 4, 5, 6
+food_positions dd 5, 2, 2, 9, 1, 3, 4, 7, 8, 1
 
 ; Define a variable to keep track of the current position in the vector
 food_position_index dd 0
 
 
 ; snake
-current_pos_x DD 5
-current_pos_y DD 0
+current_pos_x DD 4
+current_pos_y DD 4
 current_direction DB 'a'
+current_score DD 0
+max_score DD 5
+lost_game DD 0
+current_level DD 4
 
 Point STRUCT
     x DWORD ?
@@ -175,119 +179,255 @@ nivel2 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
        dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
-	   
+nivel3 dd 0, 0, 0, 1, 1, 1, 1, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+       dd 0, 0, 0, 1, 1, 1, 1, 0, 0, 0
+
+nivel4 dd 1, 0, 0, 0, 1, 1, 1, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 1, 0, 0, 0, 1
+       dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
+	   dd 1, 0, 0, 0, 0, 1, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 1, 1, 1, 0, 0, 1	
+
+nivel5 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	   dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
+       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1	 	   
 	   
 include digits.inc
 include letters.inc
 
 .code
 
+change_screen_level MACRO nivel
+	local loopi, loopj
+    pusha
+	mov current_pos_x, 3
+	mov current_pos_y, 6
+	mov current_direction, 'w'
+    mov ecx, MAX; number of elements in the matrix
+	mov edx, 0
+	loopi:
+	mov ebx, 0
+		loopj:
+		pusha
+		get_level_position edx, ebx, nivel 
+		set_screen_position edx, ebx, eax
+		popa
+		inc ebx
+		cmp ebx, ecx
+		jl loopj
+	inc edx
+	cmp edx, ecx
+	jl loopi
+	popa
+ENDM
+
+
+set_screen_position MACRO xPOS, yPOS, value
+	pusha
+	mov ecx, xPOS
+	mov ebx, yPOS
+	imul ebx, 4
+	IMUL ebx, MAX
+	IMUL ecx, 4
+	MOV screen [ecx] [ebx], value
+	popa
+ENDM
+
+get_screen_position MACRO xPOS, yPOS
+	push ecx
+	push ebx
+	mov ecx, xPOS
+	mov ebx, yPOS
+	imul ebx, 4
+	IMUL ebx, MAX
+	IMUL ecx, 4
+	MOV eax, screen [ecx] [ebx]
+	pop ebx
+	pop ecx
+ENDM
+
+get_level_position MACRO xPOS, yPOS, nivel
+	push ecx
+	push ebx
+	mov ecx, xPOS
+	mov ebx, yPOS
+	imul ebx, 4
+	IMUL ebx, MAX
+	IMUL ecx, 4
+	MOV eax, nivel [ecx] [ebx]
+	pop ebx
+	pop ecx
+ENDM
+
 ; Define a constant for the size of the screen
 ; WORKING HERE
 ; move_head macro
 move_head MACRO
-    local L1
+    local L1, PIERDERE_JOC, FINAL, L2, FINAL_MACRO, EAT_FOOD
 	pusha
     	
 ; Get the current position of the snake
-mov ecx, current_pos_x
-mov ebx, current_pos_y
+	mov ecx, current_pos_x
+	mov ebx, current_pos_y
 
 ; Update the screen to remove the tail of the snake
-print_debug space, one
-print_debug move_head_x, ecx
-print_debug move_head_y, ebx
-imul ebx, 4
-IMUL ebx, MAX
-IMUL ecx, 4 
-MOV screen [ecx] [ebx], 0
-print_debug space, two
-mov ecx, current_pos_x
-mov ebx, current_pos_y
-print_debug move_head_x, ecx
-print_debug move_head_y, ebx
-print_debug space, three
+	set_screen_position ecx, ebx, 0
+	
 
 
 ; Move the current position of the snake based on its direction
-mov al, current_direction
-cmp al, 'w'
-je move_up
-cmp al, 's'
-je move_down
-cmp al, 'a'
-je move_left
-cmp al, 'd'
-je move_right
-jmp Final
+	mov al, current_direction
+	cmp al, 'w'
+	je move_up
+	cmp al, 's'
+	je move_down
+	cmp al, 'a'
+	je move_left
+	cmp al, 'd'
+	je move_right
+	jmp Final
 
-move_up:
-dec ebx
-cmp ebx, 0
-jge L2
-mov ebx, MAX-1
-jmp L2
+	move_up:
+	dec ebx
+	cmp ebx, 0
+	jge L2
+	mov ebx, MAX-1
+	jmp L2
 
-move_down:
-inc ebx
-cmp ebx, MAX
-jl L2
-xor ebx, ebx
-jmp L2
+	move_down:
+	inc ebx
+	cmp ebx, MAX
+	jl L2
+	xor ebx, ebx
+	jmp L2
 
-move_left:
-dec ecx
-cmp ecx, 0
-jge L1
-mov ecx, MAX-1
-jmp L1
+	move_left:
+	dec ecx
+	cmp ecx, 0
+	jge L1
+	mov ecx, MAX-1
+	jmp L1
 
-move_right:
-inc ecx
-cmp ecx, MAX
-jl L1
-xor ecx, ecx
+	move_right:
+	inc ecx
+	cmp ecx, MAX
+	jl L1
+	xor ecx, ecx
 
 ; Update the current position of the snake
 
-L1:
-mov current_pos_x, ecx
-jmp Final
+	L1:
+	mov current_pos_x, ecx
+	jmp Final
 
-L2:
-mov current_pos_y, ebx
+	L2:
+	mov current_pos_y, ebx
 
 Final:
 ; Update the screen to add the head of the snake
+xor eax, eax
+get_screen_position ecx, ebx
+cmp eax, one
+je PIERDERE_JOC 
+cmp eax, five
+je EAT_FOOD
+jmp FINAL_MACRO
+	PIERDERE_JOC:
+	lose_game
+	jmp FINAL_MACRO
+	EAT_FOOD:
+	eatFOOD
+	FINAL_MACRO:
+	set_screen_position current_pos_x, current_pos_y, 3
+	popa
+ENDM
 
-mov ecx, current_pos_x
-mov ebx, current_pos_y
-imul ebx, 4
-IMUL ebx, MAX
-IMUL ecx, 4
-print_debug move_head_x, ecx
-print_debug move_head_y, ebx
-MOV screen [ecx] [ebx], 2
-
-print_debug space, four
-
-
-;mov [screen + ebx + eax], 2
-
-popa
+next_level MACRO
+	local level1, level2, level3, level4, level5, macro_end
+	pusha
+	inc current_level
+	cmp current_level, 1
+	je level1
+	cmp current_level, 2
+	je level2
+	cmp current_level, 3
+	je level3
+	cmp current_level, 4
+	je level4
+	cmp current_level, 5
+	je level5
+	; level0
+	change_screen_level nivel0
+	JMP macro_end
+	
+	level1:
+	change_screen_level nivel1
+	JMP macro_end
+	
+	level2:
+	change_screen_level nivel2
+	JMP macro_end
+	
+	level3:
+	change_screen_level nivel3
+	JMP macro_end
+	level4:
+	change_screen_level nivel4
+	JMP macro_end
+	level5:
+	change_screen_level nivel5
+	JMP macro_end
+	macro_end:
+	mov current_score, 0
+	popa
 ENDM
 
 
+lose_game MACRO
+	mov lost_game, 1
 
+	
+ENDM
 
-
-
-
+eatFOOD MACRO
+	local END_MACRO
+	pusha
+	add current_score, 1
+	; if current_score == max_score, next level
+	mov eax, current_score
+	mov ebx, max_score
+	cmp eax, ebx
+	jl END_MACRO
+	next_level
+	END_MACRO:
+	spawnFood
+	popa
+ENDM
 
 
 ; it works, but might block the game if there are not valid positions to place the food.
 spawnFood MACRO
-    local L1
+    local L1, food_position_next, food_position_next2
     pusha
     mov eax, [screen]
     mov ecx, MAX*MAX
@@ -421,9 +561,7 @@ get_position_macro MACRO i, j, matrix
     add ebx, eax
     mov eax, [ebx]
     mov current_read_matrix_number, eax
-	;print_debug eax
-	;print_debug get_position_debug, eax
-	;mov eax, current_read_matrix_number
+
 
     jmp get_position_end
 error_label:
@@ -457,48 +595,48 @@ turn_screen_code_color MACRO code
 	
 	fill_a_screen_error:
 		mov current_color, [error_color]
-		make_text_macro 'E', area, 500, 100
-		make_text_macro 'R', area, 510, 100
-		make_text_macro 'R', area, 520, 100
-		make_text_macro 'O', area, 530, 100
-		make_text_macro 'R', area, 540, 100
+		;make_text_macro 'E', area, 500, 100
+		;make_text_macro 'R', area, 510, 100
+		;make_text_macro 'R', area, 520, 100
+		;make_text_macro 'O', area, 530, 100
+		;make_text_macro 'R', area, 540, 100
 		jmp fill_a_screen_end
 	fill_a_screen_white:
 		mov current_color, [white]
-		make_text_macro 'W', area, 500, 100
-		make_text_macro 'H', area, 510, 100
-		make_text_macro 'I', area, 520, 100
-		make_text_macro 'T', area, 530, 100
-		make_text_macro 'E', area, 540, 100
+		;make_text_macro 'W', area, 500, 100
+		;make_text_macro 'H', area, 510, 100
+		;make_text_macro 'I', area, 520, 100
+		;make_text_macro 'T', area, 530, 100
+		;make_text_macro 'E', area, 540, 100
 		jmp fill_a_screen_end
 	fill_a_screen_black:
 		mov current_color, [black]
-		make_text_macro 'B', area, 500, 100
-		make_text_macro 'L', area, 510, 100
-		make_text_macro 'A', area, 520, 100
-		make_text_macro 'C', area, 530, 100
-		make_text_macro 'K', area, 540, 100
+		;make_text_macro 'B', area, 500, 100
+		;make_text_macro 'L', area, 510, 100
+		;make_text_macro 'A', area, 520, 100
+		;make_text_macro 'C', area, 530, 100
+		;make_text_macro 'K', area, 540, 100
 		jmp fill_a_screen_end
 	fill_a_screen_green:
 		mov current_color, [green]
 		jmp fill_a_screen_end
-		make_text_macro 'G', area, 500, 100
-		make_text_macro 'R', area, 510, 100
-		make_text_macro 'E', area, 520, 100
-		make_text_macro 'E', area, 530, 100
-		make_text_macro 'N', area, 540, 100
+		;make_text_macro 'G', area, 500, 100
+		;make_text_macro 'R', area, 510, 100
+		;make_text_macro 'E', area, 520, 100
+		;make_text_macro 'E', area, 530, 100
+		;make_text_macro 'N', area, 540, 100
 	fill_a_screen_red:
 		mov current_color, [red]
-		make_text_macro 'R', area, 500, 100
-		make_text_macro 'E', area, 510, 100
-		make_text_macro 'D', area, 520, 100
+		;make_text_macro 'R', area, 500, 100
+		;make_text_macro 'E', area, 510, 100
+		;make_text_macro 'D', area, 520, 100
 		jmp fill_a_screen_end
 	fill_a_screen_blue:
 		mov current_color, [blue]
-		make_text_macro 'B', area, 500, 100
-		make_text_macro 'L', area, 510, 100
-		make_text_macro 'U', area, 520, 100
-		make_text_macro 'E', area, 530, 100
+		;make_text_macro 'B', area, 500, 100
+		;make_text_macro 'L', area, 510, 100
+		;make_text_macro 'U', area, 520, 100
+		;make_text_macro 'E', area, 530, 100
 		jmp fill_a_screen_end
 	
 	fill_a_screen_end:
@@ -778,12 +916,14 @@ make_text endp
 
 ; un macro ca sa apelam mai usor desenarea simbolului
 make_text_macro macro symbol, drawArea, x, y
+	pusha
 	push y
 	push x
 	push drawArea
 	push symbol
 	call make_text
 	add esp, 16
+	popa
 endm
 
 ; functia de desenare - se apeleaza la fiecare click
@@ -797,6 +937,8 @@ draw proc
 	pusha
 	
 	mov eax, [ebp+arg1]
+	cmp eax, 0
+	jz evt_init
 	cmp eax, 1
 	jz evt_click
 	cmp eax, 2
@@ -804,7 +946,10 @@ draw proc
 	;mai jos e codul care intializeaza fereastra cu pixeli albi
 	cmp eax, 3
 	jz evt_tasta; s-a apasat o tasta
-
+	
+evt_init:
+	change_screen_level nivel4
+	spawnFood
 	jmp afisare_litere
 	
 evt_click:
@@ -815,15 +960,56 @@ evt_tasta:
 	jmp afisare_litere
 	
 evt_timer:
-	
 	inc counter
+	cmp LOST_GAME, 1
+	JE CONTINUE_DRAW_FILLSCREEN
 	move_head
+	JMP CONTINUE_DRAW_FILLSCREEN 
+	CONTINUE_DRAW_FILLSCREEN:
 	reset_area
 ;	read_level_macro offset level
 	fill_a_screen
 
 	
 afisare_litere:
+
+	;YOU LOST TEXT
+	cmp LOST_GAME, 1
+	JNE LOST_GAME_draw
+	pusha
+	make_text_macro 'Y', area, 500, 200
+	make_text_macro 'O', area, 510, 200
+	make_text_macro 'U', area, 520, 200
+	make_text_macro 'L', area, 540, 200 
+	make_text_macro 'O', area, 550, 200
+	make_text_macro 'S', area, 560, 200
+	make_text_macro 'T', area, 570, 200
+	popa
+	LOST_GAME_draw:
+	
+	; SHOW LEVEL
+	make_text_macro 'L', area, 100, 450
+	make_text_macro 'E', area, 110, 450
+	make_text_macro 'V', area, 120, 450
+	make_text_macro 'E', area, 130, 450 
+	make_text_macro 'L', area, 140, 450
+	push eax
+	mov eax, CURRENT_LEVEL
+	add eax, '0'
+	make_text_macro eax, area, 160, 450
+	POP EAX
+	
+	; SHOW SCORE
+	push eax
+	mov eax, current_score
+	add eax, '0'
+	make_text_macro eax, area, 100, 350
+	mov eax, max_score
+	add eax, '0'
+	make_text_macro 'T', area, 120, 350
+	make_text_macro 'O', area, 130, 350
+	make_text_macro eax, area, 150, 350
+	pop eax
 	;afisam valoarea counter-ului curent (sute, zeci si unitati)
 	mov ebx, 10
 	mov eax, counter
@@ -831,17 +1017,17 @@ afisare_litere:
 	mov edx, 0
 	div ebx
 	add edx, '0'
-	make_text_macro edx, area, 30, 10
+	make_text_macro edx, area, 520, 10
 	;cifra zecilor
 	mov edx, 0
 	div ebx
 	add edx, '0'
-	make_text_macro edx, area, 20, 10
+	make_text_macro edx, area, 510, 10
 	;cifra sutelor
 	mov edx, 0
 	div ebx
 	add edx, '0'
-	make_text_macro edx, area, 10, 10
+	make_text_macro edx, area, 500, 10
 	
 	;scriem un mesaj
 
