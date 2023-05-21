@@ -11,21 +11,36 @@ extern fscanf: proc
 extern fopen: proc
 extern fclose: proc
 extern memset: proc
+extern realloc: proc
 
 includelib canvas.lib
 extern BeginDrawing: proc
 
 
+; BIBLIOGRAFIE search
+; Procedures:
+; BeginDrawing
+; fill_matrix
+; make_text
+; draw
 
-;include snake_methods.asm
-;EXTERN comparePoints:PROC
-;EXTERN modifyCurrentPosition:PROC
-;EXTERN spawnFood:PROC
-;EXTERN checkIfFoodExistsAndSpawn:PROC
-;EXTERN moveSnake:PROC
-;EXTERN eatFood:PROC
-;EXTERN restart:PROC
-;EXTERN reactToScreenPositionAndDrawSnake:PROC
+; Macros
+; move_head
+; spawnFood
+; print_debug
+; fill_matrix_macro
+; push_all_registers
+; pop_all_registers
+; set_position_macro
+; get_position_macro
+; turn_screen_code_color
+; fill_a_screen
+; set_screen_to_level
+; draw_square
+; reset_area
+; reset_screen
+; make_text_macro
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -67,10 +82,16 @@ error_color EQU 0A020F0h
 current_color dd 0
 current_read_matrix_number dd 6
 
+zero dd 0
 one dd 1
 two dd 2
 three dd 3
 four dd 4
+five dd 5
+up dd 'w'
+down dd 's'
+left dd 'a'
+right dd 'd'
 
 counter DD 0 ; numara evenimentele de tip timer
 
@@ -93,6 +114,44 @@ turn_screen_code_color_debug db "[turn_screen_code_color]: The code value is: %d
 get_position_debug db "[get_position_debug]: The code value is: %d", 10, 0
 fill_a_screen_debug_i db "[fill_a_screen_debug]: i= %d", 10, 0
 fill_a_screen_debug_j db "[fill_a_screen_debug]: j= %d", 10, 0
+move_head_x db "[move_head_debug]: x = %d", 10, 0
+move_head_y db "[move_head_debug]: y = %d", 10, 0
+tasta_apasata db "[tasta_apasata]: tasta_apasata = %d", 10, 0
+space db "space %d", 10, 0
+
+; Define a new variable to represent the initial position of the snake
+
+; Define a vector of numbers between 0 and MAX
+food_positions dd 1, 2, 3, 4, 5, 6
+
+; Define a variable to keep track of the current position in the vector
+food_position_index dd 0
+
+
+; snake
+current_pos_x DD 5
+current_pos_y DD 0
+current_direction DB 'a'
+
+Point STRUCT
+    x DWORD ?
+    y DWORD ?
+Point ENDS
+
+
+
+
+
+nivel0 dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 nivel1 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -116,10 +175,157 @@ nivel2 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
        dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
+	   
+	   
 include digits.inc
 include letters.inc
 
 .code
+
+; Define a constant for the size of the screen
+; WORKING HERE
+; move_head macro
+move_head MACRO
+    local L1
+	pusha
+    	
+; Get the current position of the snake
+mov ecx, current_pos_x
+mov ebx, current_pos_y
+
+; Update the screen to remove the tail of the snake
+print_debug space, one
+print_debug move_head_x, ecx
+print_debug move_head_y, ebx
+imul ebx, 4
+IMUL ebx, MAX
+IMUL ecx, 4 
+MOV screen [ecx] [ebx], 0
+print_debug space, two
+mov ecx, current_pos_x
+mov ebx, current_pos_y
+print_debug move_head_x, ecx
+print_debug move_head_y, ebx
+print_debug space, three
+
+
+; Move the current position of the snake based on its direction
+mov al, current_direction
+cmp al, 'w'
+je move_up
+cmp al, 's'
+je move_down
+cmp al, 'a'
+je move_left
+cmp al, 'd'
+je move_right
+jmp Final
+
+move_up:
+dec ebx
+cmp ebx, 0
+jge L2
+mov ebx, MAX-1
+jmp L2
+
+move_down:
+inc ebx
+cmp ebx, MAX
+jl L2
+xor ebx, ebx
+jmp L2
+
+move_left:
+dec ecx
+cmp ecx, 0
+jge L1
+mov ecx, MAX-1
+jmp L1
+
+move_right:
+inc ecx
+cmp ecx, MAX
+jl L1
+xor ecx, ecx
+
+; Update the current position of the snake
+
+L1:
+mov current_pos_x, ecx
+jmp Final
+
+L2:
+mov current_pos_y, ebx
+
+Final:
+; Update the screen to add the head of the snake
+
+mov ecx, current_pos_x
+mov ebx, current_pos_y
+imul ebx, 4
+IMUL ebx, MAX
+IMUL ecx, 4
+print_debug move_head_x, ecx
+print_debug move_head_y, ebx
+MOV screen [ecx] [ebx], 2
+
+print_debug space, four
+
+
+;mov [screen + ebx + eax], 2
+
+popa
+ENDM
+
+
+
+
+
+
+
+
+
+; it works, but might block the game if there are not valid positions to place the food.
+spawnFood MACRO
+    local L1
+    pusha
+    mov eax, [screen]
+    mov ecx, MAX*MAX
+    mov edx, 0
+    L1:
+        ; Get the next food position from the vector
+        mov eax, [food_position_index]
+        inc eax
+        cmp eax, MAX
+        jl food_position_next
+        xor eax, eax
+    food_position_next:
+        mov [food_position_index], eax
+
+        mov ebx, [food_positions + eax*4]
+        imul ebx, MAX
+
+        ; Get another food position from the vector
+        inc eax
+        cmp eax, MAX
+        jl food_position_next2
+        xor eax, eax
+    food_position_next2:
+        mov [food_position_index], eax
+
+        lea esi, [eax+ebx]
+        shl esi, 2
+        mov esi, [screen+esi]
+        cmp esi, 0
+        jne L1
+
+        lea esi, [eax+ebx]
+        shl esi, 2
+        mov [screen+esi], 5
+
+    popa
+ENDM
+
 
 
 
@@ -216,7 +422,7 @@ get_position_macro MACRO i, j, matrix
     mov eax, [ebx]
     mov current_read_matrix_number, eax
 	;print_debug eax
-	print_debug get_position_debug, eax
+	;print_debug get_position_debug, eax
 	;mov eax, current_read_matrix_number
 
     jmp get_position_end
@@ -434,6 +640,40 @@ LOCAL LOOP_BIG, LOOP_START
     popa
 ENDM
 
+read_direction MACRO letter
+	pusha
+	print_debug tasta_apasata, letter	
+	mov al, letter
+	cmp al, 'W'
+	je move_up_DRAW
+	cmp al, 'S'
+	je move_down_DRAW
+	cmp al, 'A'
+	je move_left_DRAW
+	cmp al, 'D'
+	je move_right_DRAW
+	jmp DRAW_CONTINUE_1
+
+	move_up_DRAW:
+	mov current_direction, 'w'
+	jmp DRAW_CONTINUE_1
+
+	move_down_DRAW:
+	mov current_direction, 's'
+	jmp DRAW_CONTINUE_1
+
+	move_left_DRAW:
+	mov current_direction, 'a'
+	jmp DRAW_CONTINUE_1
+
+	move_right_DRAW:
+	mov current_direction, 'd'
+	DRAW_CONTINUE_1:
+	popa
+
+ENDM
+
+
 reset_area MACRO
 	pusha
 	
@@ -562,39 +802,26 @@ draw proc
 	cmp eax, 2
 	jz evt_timer ; nu s-a efectuat click pe nimic
 	;mai jos e codul care intializeaza fereastra cu pixeli albi
-	
+	cmp eax, 3
+	jz evt_tasta; s-a apasat o tasta
+
 	jmp afisare_litere
 	
 evt_click:
-	push eax
-    mov eax, nivel1
-	mov screen, eax
-	pop eax
-	set_screen_to_level nivel2
-	;set_position_macro 1, 2, 2	
-	;set_position_macro 2, 2, 3	
+	jmp afisare_litere
 
-	;get_position_macro 1, 2
-	
-	draw_square [ebp+arg2], [ebp+arg3], current_color
-	;fill_a_matrix screen screen_size one
-	;get_position_macro 2, 2
-	;turn_screen_code_color 5
-	;draw_square [ebp+arg2], [ebp+arg3], current_color
-	;mov eax, [ebp+arg3] ; EAX = y
-	;mov ebx, area_width
-	;mul ebx ; EAX = y * area_width
-	;add eax, [ebp+arg2] ; EAX = y * area_width + x
-	;shl eax, 2 ; EAX = (y * area_width + x)*4
-	;add eax, area
+evt_tasta:
+	read_direction [ebp+arg2]
 	jmp afisare_litere
 	
 evt_timer:
+	
 	inc counter
+	move_head
 	reset_area
 ;	read_level_macro offset level
 	fill_a_screen
-	
+
 	
 afisare_litere:
 	;afisam valoarea counter-ului curent (sute, zeci si unitati)
@@ -641,6 +868,7 @@ start:
 	mov area, eax
 	
 	mov current_color, [error_color]
+	
 	
 	;mov eax, screen_size
 	;mov ebx, screen_size
