@@ -160,12 +160,27 @@ won_game DD 0
 current_level DD 0
 
 ; tail
+tail_length DD 2
 tail1_pos_x DD 5
 tail1_pos_y DD 5
 tail2_pos_x DD 5
 tail2_pos_y DD 5
 tail3_pos_x DD 5
 tail3_pos_y DD 5
+tail4_pos_x DD 5
+tail4_pos_y DD 5
+tail5_pos_x DD 5
+tail5_pos_y DD 5
+tail6_pos_x DD 5
+tail6_pos_y DD 5
+tail7_pos_x DD 5
+tail7_pos_y DD 5
+tail8_pos_x DD 5
+tail8_pos_y DD 5
+tail9_pos_x DD 5
+tail9_pos_y DD 5
+tail10_pos_x DD 5
+tail10_pos_y DD 5
 
 RandSeed dd 1
 
@@ -559,30 +574,187 @@ move_head MACRO
 	popa
 ENDM
 
-move_body MACRO posx, poxy
+move_body MACRO posx, posy
+	LOCAL skip_tail1_clearing, skip_tail2_clearing, skip_tail3_clearing, skip_tail4_clearing, skip_tail5_clearing, skip_tail6_clearing, skip_tail7_clearing, skip_tail8_clearing, skip_tail9_clearing, skip_tail10_clearing, skip_tail1_setting, skip_tail2_setting, skip_tail3_setting, skip_tail4_setting, skip_tail5_setting, skip_tail6_setting, skip_tail7_setting, skip_tail8_setting, skip_tail9_setting, skip_tail10_setting
 	pusha
-	set_screen_position tail3_pos_x, tail3_pos_y, 0
-	set_screen_position tail2_pos_x, tail2_pos_y, 0
-	set_screen_position tail1_pos_x, tail1_pos_y, 0
+	
+	; Clear the screen positions of the tail segments up to tail_length
+    cmp tail_length,1
+    jl skip_tail1_clearing
+    set_screen_position tail1_pos_x, tail1_pos_y, 0
+
+    skip_tail1_clearing:
+    cmp tail_length,2
+    jl skip_tail2_clearing
+    set_screen_position tail2_pos_x, tail2_pos_y, 0
+
+    skip_tail2_clearing:
+    cmp tail_length,3
+    jl skip_tail3_clearing
+    set_screen_position tail3_pos_x, tail3_pos_y, 0
+
+    skip_tail3_clearing:
+    cmp tail_length,4
+    jl skip_tail4_clearing
+    set_screen_position tail4_pos_x, tail4_pos_y, 0
+
+    skip_tail4_clearing:
+    cmp tail_length,5
+    jl skip_tail5_clearing
+    set_screen_position tail5_pos_x, tail5_pos_y, 0
+
+    skip_tail5_clearing:
+    cmp tail_length,6
+    jl skip_tail6_clearing
+    set_screen_position tail6_pos_x, tail6_pos_y, 0
+
+    skip_tail6_clearing:
+    cmp tail_length,7
+    jl skip_tail7_clearing
+    set_screen_position tail7_pos_x, tail7_pos_y, 0
+	    skip_tail7_clearing:
+    cmp tail_length,8
+    jl skip_tail8_clearing
+    set_screen_position tail8_pos_x, tail8_pos_y, 0
+
+    skip_tail8_clearing:
+    cmp tail_length,9
+    jl skip_tail9_clearing
+    set_screen_position tail9_pos_x, tail9_pos_y, 0
+
+    skip_tail9_clearing:
+    cmp tail_length,10
+    jl skip_tail10_clearing
+    set_screen_position tail10_pos_x, tail10_pos_y, 0
+
+    skip_tail10_clearing:
+
+    ; Update the positions of the tail segments based on the new position of the head
+    mov eax,tail9_pos_x
+    mov tail10_pos_x,eax
+    mov eax,tail9_pos_y
+    mov tail10_pos_y,eax
+
+    mov eax,tail8_pos_x
+    mov tail9_pos_x,eax
+    mov eax,tail8_pos_y
+    mov tail9_pos_y,eax
+
+    mov eax,tail7_pos_x
+    mov tail8_pos_x,eax
+    mov eax,tail7_pos_y
+    mov tail8_pos_y,eax
+
+    mov eax,tail6_pos_x
+    mov tail7_pos_x,eax
+    mov eax,tail6_pos_y
+    mov tail7_pos_y,eax
+
+    mov eax,tail5_pos_x
+    mov tail6_pos_x,eax
+    mov eax,tail5_pos_y
+	    mov tail6_pos_y,eax
+
+    mov eax,tail4_pos_x
+    mov tail5_pos_x,eax
+    mov eax,tail4_pos_y
+    mov tail5_pos_y,eax
+
+    mov eax,tail3_pos_x
+    mov tail4_pos_x,eax
+    mov eax,tail3_pos_y
+    mov tail4_pos_y,eax
+
+    mov eax,tail2_pos_x
+    mov tail3_pos_x,eax
+    mov eax,tail2_pos_y
+    mov tail3_pos_y,eax
+
+    mov eax,tail1_pos_x
+    mov tail2_pos_x,eax
+    mov eax,tail1_pos_y
+    mov tail2_pos_y,eax
+
+    ; Update the position of the first tail segment based on the new position of the head
+    mov eax,posx
+    mov tail1_pos_x,eax
+    mov eax,posy
+    mov tail1_pos_y,eax
+
+    ; Set the screen positions of the tail segments up to tail_length to 2
+    cmp tail_length,1
+    jl skip_tail1_setting
+    set_screen_position tail1_pos_x, tail1_pos_y, 2
+	    skip_tail1_setting:
+    cmp tail_length,2
+    jl skip_tail2_setting
+    set_screen_position tail2_pos_x, tail2_pos_y, 2
+
+    skip_tail2_setting:
+    cmp tail_length,3
+    jl skip_tail3_setting
+    set_screen_position tail3_pos_x, tail3_pos_y, 2
+
+    skip_tail3_setting:
+    cmp tail_length,4
+    jl skip_tail4_setting
+    set_screen_position tail4_pos_x, tail4_pos_y, 2
+
+    skip_tail4_setting:
+    cmp tail_length,5
+    jl skip_tail5_setting
+    set_screen_position tail5_pos_x, tail5_pos_y, 2
+
+    skip_tail5_setting:
+    cmp tail_length,6
+    jl skip_tail6_setting
+    set_screen_position tail6_pos_x, tail6_pos_y, 2
+
+    skip_tail6_setting:
+    cmp tail_length,7
+    jl skip_tail7_setting
+    set_screen_position tail7_pos_x, tail7_pos_y, 2
+
+    skip_tail7_setting:
+    cmp tail_length,8
+    jl skip_tail8_setting
+    set_screen_position tail8_pos_x, tail8_pos_y, 2
+
+    skip_tail8_setting:
+    cmp tail_length,9
+    jl skip_tail9_setting
+    set_screen_position tail9_pos_x, tail9_pos_y, 2
+
+    skip_tail9_setting:
+    cmp tail_length,10
+    jl skip_tail10_setting
+    set_screen_position tail10_pos_x, tail10_pos_y, 2
+
+    skip_tail10_setting:
+
+
+	;set_screen_position tail3_pos_x, tail3_pos_y, 0
+	;set_screen_position tail2_pos_x, tail2_pos_y, 0
+	;set_screen_position tail1_pos_x, tail1_pos_y, 0
 	
 	
-	mov eax, tail2_pos_x
-	mov tail3_pos_x, eax
-	mov eax, tail2_pos_y
-	mov tail3_pos_y, eax
+	;mov eax, tail2_pos_x
+	;mov tail3_pos_x, eax
+	;mov eax, tail2_pos_y
+	;mov tail3_pos_y, eax
 	
-	mov eax, tail1_pos_x
-	mov tail2_pos_x, eax
-	mov eax, tail1_pos_y
-	mov tail2_pos_y, eax
+	;mov eax, tail1_pos_x
+	;mov tail2_pos_x, eax
+	;mov eax, tail1_pos_y
+	;mov tail2_pos_y, eax
 	
-	mov eax, posx
-	mov tail1_pos_x, eax
-	mov eax, poxy
-	mov tail1_pos_y, eax
-	set_screen_position tail3_pos_x, tail3_pos_y, 2
-	set_screen_position tail2_pos_x, tail2_pos_y, 2
-	set_screen_position tail1_pos_x, tail1_pos_y, 2
+	;mov eax, posx
+	;mov tail1_pos_x, eax
+	;mov eax, poxy
+	;mov tail1_pos_y, eax
+	;set_screen_position tail3_pos_x, tail3_pos_y, 2
+	;set_screen_position tail2_pos_x, tail2_pos_y, 2
+	;set_screen_position tail1_pos_x, tail1_pos_y, 2
 	popa
 ENDM
 
@@ -630,8 +802,9 @@ next_level MACRO
 	mov won_game, 1
 	macro_end:
 	mov eax, current_level
-	add max_score, eax
+	add max_score, 1
 	mov current_score, 0
+	mov tail_length, 0
 	;reset pos of food so it doesnt destroy the map
 	mov food_position_x_1, 1
 	mov food_position_y_1, 1
@@ -654,6 +827,7 @@ eatFOOD MACRO
 	local END_MACRO, check_second_position, spawnFoodJ, check_poison_position
 	pusha
 	add current_score, 1
+	add tail_length, 1
 	; if current_score == max_score, next level
 	mov eax, current_score
 	mov ebx, max_score
@@ -1158,6 +1332,7 @@ read_direction MACRO letter
 	
 	restart_game:
 	mov current_score, 0
+	mov tail_length, 1
 	mov lost_game, 0
 	mov won_game, 0
 	mov max_score, 5
