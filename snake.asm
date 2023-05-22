@@ -1,4 +1,4 @@
-.386
+.686
 .model flat, stdcall
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -58,20 +58,31 @@ window_title DB "SNAKE by Vlad Durdeu",0
 area_width EQU 800
 area_height EQU 800
 area DD 0
-SCREEN_SIZE EQU 10 ; dimensiunea matricei in ambele directii
-screen dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+SCREEN_SIZE EQU 20 ; dimensiunea matricei in ambele directii
+screen dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 ;screen Dd 0
-square_size EQU 30
-MAX equ 10 ; same thing with screen_size 
+square_size EQU 20
+MAX equ 20 ; same thing with screen_size 
 
 red EQU 0FF0000h
 black EQU 0000000h
@@ -122,20 +133,20 @@ space db "space %d", 10, 0
 ; Define a new variable to represent the initial position of the snake
 
 ; Define a vector of numbers between 0 and MAX
-food_positions dd 5, 2, 2, 9, 1, 3, 4, 7, 8, 1
+food_positions dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 ; Define a variable to keep track of the current position in the vector
 food_position_index dd 0
 
 
 ; snake
-current_pos_x DD 4
-current_pos_y DD 4
+current_pos_x DD 5
+current_pos_y DD 10
 current_direction DB 'a'
 current_score DD 0
 max_score DD 5
 lost_game DD 0
-current_level DD 4
+current_level DD 0
 
 Point STRUCT
     x DWORD ?
@@ -146,76 +157,173 @@ Point ENDS
 
 
 
-nivel0 dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+nivel0 dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-nivel1 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
-nivel2 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+nivel1 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
-nivel3 dd 0, 0, 0, 1, 1, 1, 1, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-       dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-       dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-       dd 0, 0, 0, 1, 1, 1, 1, 0, 0, 0
+nivel2 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
-nivel4 dd 1, 0, 0, 0, 1, 1, 1, 0, 0, 1
-	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 0, 1, 0, 0, 0, 1
-       dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-	   dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-       dd 0, 0, 0, 0, 0, 1, 0, 0, 0, 0
-	   dd 1, 0, 0, 0, 0, 1, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-       dd 1, 0, 0, 0, 1, 1, 1, 0, 0, 1	
+nivel3 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
-nivel5 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	   dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-       dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
-       dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
-	   dd 1, 0, 0, 0, 1, 1, 0, 0, 0, 1
-       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1	 	   
+nivel4 dd 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+       dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1
+
+nivel5 dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	   dd 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+       dd 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1	 	   
 	   
 include digits.inc
 include letters.inc
 
 .code
+
+
+get_random_position MACRO
+    LOCAL randomize_loop
+    push edx
+    push ecx
+	mov eax, MAX
+    randomize_loop:
+        ; generate random x and y positions
+        RDTSC
+		MOV EAX, EDX   
+		MOV ECX, max 
+		dec ecx
+		XOR EDX, EDX   
+		DIV ECX         
+		INC EDX           
+		push edx
+
+        RDTSC
+		MOV EAX, EDX   
+		MOV ECX, max
+		dec ecx
+		XOR EDX, EDX   
+		DIV ECX         
+		INC EDX           
+        mov ebx, edx ; y position
+		pop ecx
+        ; check value at screen[eax][ebx]
+        get_screen_position ecx, ebx
+        cmp eax, 1
+        je randomize_loop ; if value is 1, choose another set of numbers
+		mov eax, ecx 
+    pop ecx
+    pop edx
+ENDM
+
 
 change_screen_level MACRO nivel
 	local loopi, loopj
@@ -278,6 +386,43 @@ get_level_position MACRO xPOS, yPOS, nivel
 	pop ebx
 	pop ecx
 ENDM
+
+randomize_food_positions MACRO
+    LOCAL randomize_loop
+    pusha
+    mov ecx, MAX ; number of elements in the food_positions array
+	add ecx, 6
+    xor edi, edi ; index for food_positions
+    randomize_loop:
+        ; generate random x and y positions
+        RDTSC
+        xor edx, edx
+        div ecx
+        mov ebx, edx ; x position
+
+        RDTSC
+        xor edx, edx
+        div ecx
+        mov ecx, edx ; y position
+
+        ; check value at screen[ebx][ecx]
+        get_screen_position ebx, edx
+        cmp eax, 1
+        je randomize_loop ; if value is 1, choose another set of numbers
+
+        ; store x and y positions in food_positions array
+        mov food_positions[edi], ebx
+        inc edi
+        mov food_positions[edi], edx
+        inc edi
+
+        dec ecx
+        jnz randomize_loop
+    popa
+ENDM
+
+
+
 
 ; Define a constant for the size of the screen
 ; WORKING HERE
@@ -364,6 +509,7 @@ ENDM
 
 next_level MACRO
 	local level1, level2, level3, level4, level5, macro_end
+	
 	pusha
 	inc current_level
 	cmp current_level, 1
@@ -399,6 +545,7 @@ next_level MACRO
 	JMP macro_end
 	macro_end:
 	mov current_score, 0
+	;randomize_food_positions
 	popa
 ENDM
 
@@ -427,42 +574,43 @@ ENDM
 
 ; it works, but might block the game if there are not valid positions to place the food.
 spawnFood MACRO
-    local L1, food_position_next, food_position_next2
+    ;local L1, food_position_next, food_position_next2
     pusha
-    mov eax, [screen]
-    mov ecx, MAX*MAX
-    mov edx, 0
-    L1:
-        ; Get the next food position from the vector
-        mov eax, [food_position_index]
-        inc eax
-        cmp eax, MAX
-        jl food_position_next
-        xor eax, eax
-    food_position_next:
-        mov [food_position_index], eax
+    ;mov eax, [screen]
+    ;mov ecx, MAX*MAX
+    ;mov edx, 0
+    ;L1:
+    ;    ; Get the next food position from the vector
+    ;    mov eax, [food_position_index]
+    ;    inc eax
+    ;    cmp eax, MAX
+    ;    jl food_position_next
+    ;    xor eax, eax
+    ;food_position_next:
+    ;    mov [food_position_index], eax
 
-        mov ebx, [food_positions + eax*4]
-        imul ebx, MAX
+     ;   mov ebx, [food_positions + eax*4]
+    ;    imul ebx, MAX
 
         ; Get another food position from the vector
-        inc eax
-        cmp eax, MAX
-        jl food_position_next2
-        xor eax, eax
-    food_position_next2:
-        mov [food_position_index], eax
+    ;    inc eax
+    ;    cmp eax, MAX
+    ;    jl food_position_next2
+    ;    xor eax, eax
+    ;food_position_next2:
+    ;    mov [food_position_index], eax
 
-        lea esi, [eax+ebx]
-        shl esi, 2
-        mov esi, [screen+esi]
-        cmp esi, 0
-        jne L1
+     ;   lea esi, [eax+ebx]
+     ;   shl esi, 2
+    ;    mov esi, [screen+esi]
+    ;    cmp esi, 0
+    ;    jne L1
 
-        lea esi, [eax+ebx]
-        shl esi, 2
-        mov [screen+esi], 5
-
+    ;    lea esi, [eax+ebx]
+    ;    shl esi, 2
+    ;    mov [screen+esi], 5
+	get_random_position 
+	set_screen_position eax, ebx, 5
     popa
 ENDM
 
@@ -779,6 +927,7 @@ LOCAL LOOP_BIG, LOOP_START
 ENDM
 
 read_direction MACRO letter
+	local move_up_DRAW, move_down_DRAW, move_left_DRAW, move_right_DRAW, restart_game
 	pusha
 	print_debug tasta_apasata, letter	
 	mov al, letter
@@ -790,8 +939,17 @@ read_direction MACRO letter
 	je move_left_DRAW
 	cmp al, 'D'
 	je move_right_DRAW
+	cmp al, 'R'
+	je restart_game
 	jmp DRAW_CONTINUE_1
 
+	restart_game:
+	mov current_score, 0
+	mov lost_game, 0
+	change_screen_level nivel0 
+	spawnFood
+	jmp DRAW_CONTINUE_1
+	
 	move_up_DRAW:
 	mov current_direction, 'w'
 	jmp DRAW_CONTINUE_1
@@ -806,6 +964,9 @@ read_direction MACRO letter
 
 	move_right_DRAW:
 	mov current_direction, 'd'
+	
+	
+	
 	DRAW_CONTINUE_1:
 	popa
 
@@ -948,11 +1109,12 @@ draw proc
 	jz evt_tasta; s-a apasat o tasta
 	
 evt_init:
-	change_screen_level nivel4
+	change_screen_level nivel0
 	spawnFood
 	jmp afisare_litere
 	
 evt_click:
+	spawnFood
 	jmp afisare_litere
 
 evt_tasta:
@@ -1003,12 +1165,12 @@ afisare_litere:
 	push eax
 	mov eax, current_score
 	add eax, '0'
-	make_text_macro eax, area, 100, 350
+	make_text_macro eax, area, 100, 420
 	mov eax, max_score
 	add eax, '0'
-	make_text_macro 'T', area, 120, 350
-	make_text_macro 'O', area, 130, 350
-	make_text_macro eax, area, 150, 350
+	make_text_macro 'T', area, 120, 420
+	make_text_macro 'O', area, 130, 420
+	make_text_macro eax, area, 150, 420
 	pop eax
 	;afisam valoarea counter-ului curent (sute, zeci si unitati)
 	mov ebx, 10
